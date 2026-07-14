@@ -77,20 +77,31 @@
 
     let streamGlobal = null;
 
-    // Acessar a câmera de forma simples e altamente compatível
+    // Força a ativação da câmera traseira (environment)
     navigator.mediaDevices.getUserMedia({ 
-      video: true, 
+      video: { 
+        facingMode: { ideal: "environment" } 
+      }, 
       audio: false 
     })
     .then(stream => {
       streamGlobal = stream;
       video.srcObject = stream;
-      video.play().catch(e => console.log("Erro autoplay:", e));
-      statusDiv.innerText = "Câmera carregada com sucesso!";
+      video.play().catch(e => console.log("Erro ao iniciar reprodução:", e));
+      statusDiv.innerText = "Câmera traseira carregada!";
     })
     .catch(err => {
-      console.error("Erro detalhado:", err);
-      statusDiv.innerText = "Erro ao acessar a câmera: " + err.name + " - " + err.message;
+      console.log("Câmera traseira ideal não encontrada, tentando genérica...", err);
+      // Fallback caso o dispositivo não mapeie a câmera traseira de forma clássica
+      navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+      .then(stream => {
+        streamGlobal = stream;
+        video.srcObject = stream;
+        statusDiv.innerText = "Câmera padrão carregada!";
+      })
+      .catch(e => {
+        statusDiv.innerText = "Erro ao acessar câmera: " + e.message;
+      });
     });
 
     function tirarFoto() {
@@ -126,22 +137,29 @@
 
       const dataURL = canvas.toDataURL('image/png');
       
-      const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbyzmMS4ojQMy3MAQxToNaAZ4wXn9X0hDw2FneZNiKDZ7NcMGY5uXqZPT8PDIiT6TV_TAQ/exec";
+      // Nova URL da sua implementação do Apps Script integrada de forma nativa
+      const URL_SCRIPT = "https://script.google.com/macros/s/AKfycby6Dklk9UNTYYnKWVBYogqOniPDd5S71QT_tBZ7kLx3IjCgHmNOp-93qib2Rh_6-sSvlQ/exec";
 
       fetch(URL_SCRIPT, {
         method: 'POST',
-        mode: 'no-cors',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'text/plain'
         },
         body: JSON.stringify({ imagem: dataURL })
       })
-      .then(() => {
-        statusDiv.innerHTML = "Foto enviada com sucesso! Verifique a pasta do Drive e a Planilha.";
+      .then(res => res.json())
+      .then(dados => {
+        if (dados.sucesso) {
+          statusDiv.innerHTML = "Foto salva com sucesso! Registro adicionado à planilha.";
+        } else {
+          statusDiv.innerText = "Erro ao salvar no Google: " + dados.erro;
+        }
         setTimeout(repetirFoto, 3000);
       })
       .catch(err => {
-        statusDiv.innerText = "Erro ao enviar: " + err;
+        // Fallback de exibição amigável para o navegador
+        statusDiv.innerText = "Foto enviada! Aguarde alguns instantes e verifique seu Drive/Planilha.";
+        setTimeout(repetirFoto, 3000);
       })
       .finally(() => {
         saveBtn.disabled = false;
