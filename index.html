@@ -77,18 +77,20 @@
 
     let streamGlobal = null;
 
+    // Acessar a câmera de forma simples e altamente compatível
     navigator.mediaDevices.getUserMedia({ 
-      video: { facingMode: "environment" }, 
+      video: true, 
       audio: false 
     })
     .then(stream => {
       streamGlobal = stream;
       video.srcObject = stream;
+      video.play().catch(e => console.log("Erro autoplay:", e));
       statusDiv.innerText = "Câmera carregada com sucesso!";
     })
     .catch(err => {
-      console.error(err);
-      statusDiv.innerText = "Erro ao acessar a câmera. Verifique as permissões de mídia do seu navegador.";
+      console.error("Erro detalhado:", err);
+      statusDiv.innerText = "Erro ao acessar a câmera: " + err.name + " - " + err.message;
     });
 
     function tirarFoto() {
@@ -124,7 +126,6 @@
 
       const dataURL = canvas.toDataURL('image/png');
       
-      // SUBSTITUA ESTA URL PELA DO SEU GOOGLE APPS SCRIPT:
       const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbyzmMS4ojQMy3MAQxToNaAZ4wXn9X0hDw2FneZNiKDZ7NcMGY5uXqZPT8PDIiT6TV_TAQ/exec";
 
       fetch(URL_SCRIPT, {
@@ -136,7 +137,7 @@
         body: JSON.stringify({ imagem: dataURL })
       })
       .then(() => {
-        statusDiv.innerHTML = https://script.google.com/macros/s/AKfycbyzmMS4ojQMy3MAQxToNaAZ4wXn9X0hDw2FneZNiKDZ7NcMGY5uXqZPT8PDIiT6TV_TAQ/exec;
+        statusDiv.innerHTML = "Foto enviada com sucesso! Verifique a pasta do Drive e a Planilha.";
         setTimeout(repetirFoto, 3000);
       })
       .catch(err => {
