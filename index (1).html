@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Câmera Web App</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background-color: #f4f4f9;
+      margin: 0;
+      padding: 20px;
+    }
+    h2 { color: #333; }
+    #video, #canvas {
+      width: 100%;
+      max-width: 400px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      background-color: #000;
+    }
+    #canvas { display: none; }
+    .btn-container {
+      margin-top: 15px;
+      display: flex;
+      gap: 10px;
+    }
+    button {
+      padding: 12px 24px;
+      font-size: 16px;
+      font-weight: bold;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    #snapBtn { background-color: #007bff; color: white; }
+    #snapBtn:hover { background-color: #0056b3; }
+    #saveBtn { background-color: #28a745; color: white; display: none; }
+    #saveBtn:hover { background-color: #218838; }
+    #retakeBtn { background-color: #dc3545; color: white; display: none; }
+    #retakeBtn:hover { background-color: #c82333; }
+    #status {
+      margin-top: 15px;
+      font-size: 14px;
+      font-weight: bold;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Câmera Web App</h2>
+  
+  <video id="video" autoplay playsinline></video>
+  <canvas id="canvas"></canvas>
+
+  <div class="btn-container">
+    <button id="snapBtn" onclick="tirarFoto()">Tirar Foto</button>
+    <button id="retakeBtn" onclick="repetirFoto()">Tirar Outra</button>
+    <button id="saveBtn" onclick="enviarFoto()">Salvar Foto</button>
+  </div>
+
+  <div id="status">Aguardando permissão da câmera...</div>
+
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const snapBtn = document.getElementById('snapBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const retakeBtn = document.getElementById('retakeBtn');
+    const statusDiv = document.getElementById('status');
+
+    let streamGlobal = null;
+
+    navigator.mediaDevices.getUserMedia({ 
+      video: { facingMode: "environment" }, 
+      audio: false 
+    })
+    .then(stream => {
+      streamGlobal = stream;
+      video.srcObject = stream;
+      statusDiv.innerText = "Câmera carregada com sucesso!";
+    })
+    .catch(err => {
+      console.error(err);
+      statusDiv.innerText = "Erro ao acessar a câmera. Verifique as permissões de mídia do seu navegador.";
+    });
+
+    function tirarFoto() {
+      const context = canvas.getContext('2d');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      
+      video.style.display = 'none';
+      canvas.style.display = 'block';
+      
+      snapBtn.style.display = 'none';
+      saveBtn.style.display = 'inline-block';
+      retakeBtn.style.display = 'inline-block';
+      statusDiv.innerText = "Foto capturada! Deseja salvar?";
+    }
+
+    function repetirFoto() {
+      video.style.display = 'block';
+      canvas.style.display = 'none';
+      
+      snapBtn.style.display = 'inline-block';
+      saveBtn.style.display = 'none';
+      retakeBtn.style.display = 'none';
+      statusDiv.innerText = "Câmera ativa.";
+    }
+
+    function enviarFoto() {
+      statusDiv.innerText = "Salvando no Google Drive... Por favor, aguarde.";
+      saveBtn.disabled = true;
+      retakeBtn.disabled = true;
+
+      const dataURL = canvas.toDataURL('image/png');
+      
+      // SUBSTITUA ESTA URL PELA DO SEU GOOGLE APPS SCRIPT:
+      const URL_SCRIPT = "COLE_AQUI_O_LINK_DO_SEU_APPS_SCRIPT";
+
+      fetch(URL_SCRIPT, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ imagem: dataURL })
+      })
+      .then(() => {
+        statusDiv.innerHTML = https://script.google.com/macros/s/AKfycbyzmMS4ojQMy3MAQxToNaAZ4wXn9X0hDw2FneZNiKDZ7NcMGY5uXqZPT8PDIiT6TV_TAQ/exec;
+        setTimeout(repetirFoto, 3000);
+      })
+      .catch(err => {
+        statusDiv.innerText = "Erro ao enviar: " + err;
+      })
+      .finally(() => {
+        saveBtn.disabled = false;
+        retakeBtn.disabled = false;
+      });
+    }
+  </script>
+</body>
+</html>
